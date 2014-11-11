@@ -761,6 +761,7 @@ DygraphCanvasRenderer._fillPlotter = function(e) {
         }
       }
       if (!isNaN(prevX)) {
+        if (Math.round(prevX) == Math.round(point.canvasx)) continue;
         ctx.moveTo(prevX, prevYs[0]);
         
         // Move to top fill point
