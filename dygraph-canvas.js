@@ -711,6 +711,7 @@ DygraphCanvasRenderer._fillPlotter = function(e) {
     ctx.fillStyle = err_color;
     ctx.beginPath();
     var last_x, is_first = true;
+    var extremesForX = null;  // [min, max] for this x-value (optimization)
     while (iter.hasNext) {
       var point = iter.next();
       if (!Dygraph.isOK(point.y) && !stepPlot) {
@@ -761,9 +762,25 @@ DygraphCanvasRenderer._fillPlotter = function(e) {
         }
       }
       if (!isNaN(prevX)) {
-        if (Math.round(prevX) == Math.round(point.canvasx)) continue;
+        // Optimization: for filled graphs, only draw a point if it's higher or
+        // lower than the previous most-extreme points.
+        if (Math.round(prevX) != Math.round(point.canvasx)) {
+          extremesForX = null;
+        } else {
+          var newY = newYs[0];
+          if (extremesForX == null) {
+            extremesForX = [newY, newY];
+          } else if (newY < extremesForX[0]) {
+            extremesForX[0] = newY;
+          } else if (newY > extremesForX[1]) {
+            extremesForX[1] = newY;
+          } else {
+            continue;  // no need to draw this point, it's already covered.
+          }
+        }
+
         ctx.moveTo(prevX, prevYs[0]);
-        
+
         // Move to top fill point
         if (stepPlot) {
           ctx.lineTo(point.canvasx, prevYs[0]);
